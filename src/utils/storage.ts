@@ -1,20 +1,24 @@
 import { CrawlResult } from "./crawler";
 
-const STORAGE_KEY = "goobike_crawl_data";
+const API_URL = "http://localhost:3001/api/crawl-data";
 
-export function saveCrawlData(results: CrawlResult[]): void {
+export async function saveCrawlData(results: CrawlResult[]): Promise<void> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(results));
+    await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(results),
+    });
   } catch {
-    // localStorage 용량 초과 시 무시
+    // 저장 실패 시 무시
   }
 }
 
-export function loadCrawlData(): CrawlResult[] | null {
+export async function loadCrawlData(): Promise<CrawlResult[] | null> {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return null;
-    return JSON.parse(data) as CrawlResult[];
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    return data as CrawlResult[] | null;
   } catch {
     return null;
   }

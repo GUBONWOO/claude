@@ -874,3 +874,264 @@ mark {
   .pagination-bar { gap: 2px; }
   .pager-btn { padding: 7px 10px; font-size: 0.75rem; }
 }
+
+/* ============================================================
+   Custom Scrollbar
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-input);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ============================================================
+   Header Logo Gradient
+   ============================================================ */
+.app-header__logo {
+  background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ============================================================
+   Card Entrance Animation
+   ============================================================ */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.listing-card {
+  animation: card-enter 280ms ease both;
+}
+
+.listing-card:nth-child(1)  { animation-delay: 0ms; }
+.listing-card:nth-child(2)  { animation-delay: 30ms; }
+.listing-card:nth-child(3)  { animation-delay: 60ms; }
+.listing-card:nth-child(4)  { animation-delay: 90ms; }
+.listing-card:nth-child(5)  { animation-delay: 120ms; }
+.listing-card:nth-child(6)  { animation-delay: 150ms; }
+.listing-card:nth-child(7)  { animation-delay: 180ms; }
+.listing-card:nth-child(8)  { animation-delay: 210ms; }
+.listing-card:nth-child(9)  { animation-delay: 240ms; }
+.listing-card:nth-child(10) { animation-delay: 270ms; }
+
+/* ============================================================
+   Image Gradient Overlay
+   ============================================================ */
+.listing-card__image-wrap {
+  position: relative;
+}
+
+.listing-card__image-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    transparent 60%,
+    rgba(255,255,255,0.15) 100%
+  );
+  pointer-events: none;
+}
+
+/* ============================================================
+   Skeleton Loading
+   ============================================================ */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-input) 25%,
+    #ebebea 50%,
+    var(--bg-input) 75%
+  );
+  background-size: 1200px 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  height: 110px;
+}
+
+.skeleton-card__image {
+  width: 151px;
+  min-width: 151px;
+  height: 100%;
+}
+
+.skeleton-card__body {
+  flex: 1;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+}
+
+.skeleton-card__line {
+  height: 12px;
+  border-radius: 6px;
+}
+
+/* ============================================================
+   Filter Pill Count Badge
+   ============================================================ */
+.filter-pill__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: 99px;
+  background: rgba(0,0,0,0.08);
+  color: currentColor;
+  line-height: 1;
+}
+
+.filter-pill--active .filter-pill__count {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+.filter-pill--active-goobike .filter-pill__count { background: rgba(46,125,50,0.15); color: var(--source-goobike-text); }
+.filter-pill--active-rebirth .filter-pill__count  { background: rgba(245,127,23,0.15); color: var(--source-rebirth-text); }
+.filter-pill--active-mercari .filter-pill__count  { background: rgba(198,40,40,0.15); color: var(--source-mercari-text); }
+.filter-pill--active-yahoo   .filter-pill__count  { background: rgba(21,101,192,0.15); color: var(--source-yahoo-text); }
+
+/* ============================================================
+   Scroll to Top Button
+   ============================================================ */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--text-primary);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  transition: all var(--transition-base);
+  z-index: 50;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+.scroll-top-btn.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.scroll-top-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+}
+
+/* ============================================================
+   Price Accent Color
+   ============================================================ */
+.listing-card__price {
+  color: #c0392b;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* ============================================================
+   Status Bar Gradient Border
+   ============================================================ */
+.status-bar {
+  background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+              linear-gradient(135deg, var(--source-goobike-dot), var(--source-yahoo-dot), var(--source-mercari-dot)) border-box;
+  border: 1px solid transparent;
+}
+
+/* ============================================================
+   Header shimmer line
+   ============================================================ */
+.app-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--source-goobike-dot) 20%,
+    var(--source-yahoo-dot) 50%,
+    var(--source-mercari-dot) 80%,
+    transparent 100%
+  );
+  opacity: 0.35;
+}
+
+/* ============================================================
+   Source tag subtle glow on hover
+   ============================================================ */
+.listing-card:hover .source-tag--goobike { box-shadow: 0 0 0 2px rgba(67,160,71,0.2); }
+.listing-card:hover .source-tag--rebirth  { box-shadow: 0 0 0 2px rgba(251,140,0,0.2); }
+.listing-card:hover .source-tag--mercari  { box-shadow: 0 0 0 2px rgba(229,57,53,0.2); }
+.listing-card:hover .source-tag--yahoo    { box-shadow: 0 0 0 2px rgba(30,136,229,0.2); }
+
+/* ============================================================
+   Search bar glass effect
+   ============================================================ */
+.search-bar {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  position: sticky;
+  top: 57px;
+  z-index: 90;
+  margin-bottom: 24px;
+}
+
+/* ============================================================
+   Listing card price group separator
+   ============================================================ */
+.listing-card__total-price::before {
+  content: "→";
+  margin-right: 6px;
+  opacity: 0.4;
+}

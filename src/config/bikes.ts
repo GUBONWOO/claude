@@ -9,36 +9,8 @@ export interface BikeModel {
 }
 
 // 크롤링 대상 바이크 모델
+// 순서: リバースオート → メルカリ → ヤフオク → GooBike (GooBike가 가장 마지막)
 const BIKE_MODELS: BikeModel[] = [
-  // === GooBike ===
-  {
-    id: 'goobike-ninja400',
-    name: 'Ninja 400',
-    maker: 'Kawasaki',
-    source: 'goobike',
-    url: 'https://www.goobike.com/maker-kawasaki/car-ninja_400/index.html',
-  },
-  {
-    id: 'goobike-yzf-r7',
-    name: 'YZF-R7',
-    maker: 'Yamaha',
-    source: 'goobike',
-    url: 'https://www.goobike.com/maker-yamaha/car-yzf_r7/index.html',
-  },
-  {
-    id: 'goobike-yzf-r6',
-    name: 'YZF-R6',
-    maker: 'Yamaha',
-    source: 'goobike',
-    url: 'https://www.goobike.com/maker-yamaha/car-yzf_r6/index.html',
-  },
-  {
-    id: 'goobike-zx-6r',
-    name: 'ZX-6R',
-    maker: 'Kawasaki',
-    source: 'goobike',
-    url: 'https://www.goobike.com/maker-kawasaki/car-ninja_zx_6r/index.html',
-  },
   // === リバースオート ===
   {
     id: 'rebirth-ninja400',
@@ -118,6 +90,35 @@ const BIKE_MODELS: BikeModel[] = [
     maker: 'Kawasaki',
     source: 'yahoo',
     url: 'https://auctions.yahoo.co.jp/search/search?p=zx-6r+%E8%BB%8A%E4%BD%93&ei=utf-8',
+  },
+  // === GooBike (가장 마지막) ===
+  {
+    id: 'goobike-ninja400',
+    name: 'Ninja 400',
+    maker: 'Kawasaki',
+    source: 'goobike',
+    url: 'https://www.goobike.com/maker-kawasaki/car-ninja_400/index.html',
+  },
+  {
+    id: 'goobike-yzf-r7',
+    name: 'YZF-R7',
+    maker: 'Yamaha',
+    source: 'goobike',
+    url: 'https://www.goobike.com/maker-yamaha/car-yzf_r7/index.html',
+  },
+  {
+    id: 'goobike-yzf-r6',
+    name: 'YZF-R6',
+    maker: 'Yamaha',
+    source: 'goobike',
+    url: 'https://www.goobike.com/maker-yamaha/car-yzf_r6/index.html',
+  },
+  {
+    id: 'goobike-zx-6r',
+    name: 'ZX-6R',
+    maker: 'Kawasaki',
+    source: 'goobike',
+    url: 'https://www.goobike.com/maker-kawasaki/car-ninja_zx_6r/index.html',
   },
 ];
 

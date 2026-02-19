@@ -3,18 +3,33 @@ import { crawlAllModels, CrawlResult } from "../utils/crawler";
 import { saveCrawlData, loadCrawlData } from "../utils/storage";
 import BIKE_MODELS, { CRAWL_INTERVAL } from "../config/bikes";
 
+// 모델별로 새 크롤링 결과를 기존 데이터에 병합
+function mergeAllResults(existing: CrawlResult[], newResults: CrawlResult[]): CrawlResult[] {
+  const merged = [...existing];
+  for (const newResult of newResults) {
+    const idx = merged.findIndex((r) => r.model.id === newResult.model.id);
+    if (idx >= 0) {
+      merged[idx] = newResult;
+    } else {
+      merged.push(newResult);
+    }
+  }
+  return merged;
+}
+
 export function useCrawler() {
-  // 표시용 데이터 (저장된 JSON 기반)
   const [results, setResults] = useState<CrawlResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastCrawled, setLastCrawled] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resultsRef = useRef<CrawlResult[]>([]);
+  resultsRef.current = results;
 
-  // 저장된 데이터 불러오기
-  const loadSaved = useCallback(() => {
-    const saved = loadCrawlData();
+  const loadSaved = useCallback(async () => {
+    const saved = await loadCrawlData();
     if (saved && saved.length > 0) {
       setResults(saved);
+      resultsRef.current = saved;
       const latest = saved.reduce(
         (max, r) => (r.crawledAt > max ? r.crawledAt : max),
         saved[0].crawledAt
@@ -26,13 +41,14 @@ export function useCrawler() {
   const doCrawl = useCallback(async () => {
     setLoading(true);
     try {
-      // 크롤링 중에는 기존 results를 건드리지 않음
-      const data = await crawlAllModels(BIKE_MODELS);
-      // 크롤링 완료 → JSON 저장
-      saveCrawlData(data);
-      // 저장된 데이터로 갱신 (리프레시)
-      setResults(data);
+      // 크롤링 중에는 화면 갱신하지 않음 — 기존 데이터 유지
+      const crawled = await crawlAllModels(BIKE_MODELS);
+      // 전체 완료 후 기존 데이터와 병합 → 화면 갱신 + 파일 저장
+      const merged = mergeAllResults(resultsRef.current, crawled);
+      setResults(merged);
+      resultsRef.current = merged;
       setLastCrawled(new Date());
+      saveCrawlData(merged);
     } catch {
       // 개별 모델 에러는 CrawlResult.error에 포함됨
     } finally {
@@ -41,9 +57,7 @@ export function useCrawler() {
   }, []);
 
   useEffect(() => {
-    // 1) 저장된 데이터 먼저 표시
     loadSaved();
-    // 2) 백그라운드 크롤링 시작
     doCrawl();
     intervalRef.current = setInterval(doCrawl, CRAWL_INTERVAL);
     return () => {

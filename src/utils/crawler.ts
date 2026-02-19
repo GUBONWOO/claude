@@ -1,6 +1,8 @@
 import { BikeModel, SiteSource, REQUEST_DELAY, MERCARI_CATEGORY_ID } from "../config/bikes";
 
-const PROXY_URL = "https://api.codetabs.com/v1/proxy/?quest=";
+const HTML_PROXY = "http://localhost:3001/api/proxy";
+const MERCARI_PROXY = "http://localhost:3001/api/mercari";
+const YAHOO_PROXY = "http://localhost:3001/api/yahoo";
 
 export interface BikeListing {
   name: string;
@@ -31,10 +33,8 @@ const MIN_PRICE_YEN = 50000;
 // 가격 문자열에서 엔화 금액 추출
 function parsePriceToYen(price: string): number {
   if (!price) return 0;
-  // "XX.X万円" or "XX万円" 형식
   const manMatch = price.match(/([\d.]+)\s*万/);
   if (manMatch) return parseFloat(manMatch[1]) * 10000;
-  // "XXX,XXX円" or "XXX,XXX" 형식
   const yenMatch = price.replace(/[,、]/g, "").match(/([\d]+)/);
   if (yenMatch) return parseInt(yenMatch[1], 10);
   return 0;
@@ -48,16 +48,14 @@ function filterLowPriceListings(listings: BikeListing[]): BikeListing[] {
   });
 }
 
-// 프록시를 통해 HTML 가져오기 (인코딩 자동 감지)
+// 로컬 프록시를 통해 HTML 가져오기
 async function fetchPageAsText(url: string, encoding: string = "utf-8"): Promise<string> {
-  const proxyUrl = PROXY_URL + url;
+  const proxyUrl = `${HTML_PROXY}?url=${encodeURIComponent(url)}&encoding=${encoding}`;
   const response = await fetch(proxyUrl);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
-  const buffer = await response.arrayBuffer();
-  const decoder = new TextDecoder(encoding);
-  return decoder.decode(buffer);
+  return response.text();
 }
 
 // ============================================================
@@ -133,16 +131,6 @@ function parseGoobikeListings(html: string, model: BikeModel): BikeListing[] {
 
 // ============================================================
 // リバースオート 파서
-// HTML 구조:
-//   <section class="clearfix">
-//     <p class="shop">점포명</p>
-//     <header><h2><a href="/recent/bikes/ID">모델명</a></h2></header>
-//     <div class="thumb"><a><img src="이미지"></a></div>
-//     <div class="itemInfo">
-//       <table> td: 년식, 색, 주행거리, 차검, 배기량 </table>
-//       <table> td.price > em: 가격(円) </table>
-//     </div>
-//   </section>
 // ============================================================
 function parseRebirthListings(html: string, model: BikeModel): BikeListing[] {
   const parser = new DOMParser();
@@ -152,25 +140,21 @@ function parseRebirthListings(html: string, model: BikeModel): BikeListing[] {
   const sections = doc.querySelectorAll("section.clearfix");
 
   sections.forEach((section) => {
-    // 매물명 + 상세 링크
     const titleLink = section.querySelector("header h2 a");
     if (!titleLink) return;
     const name = titleLink.textContent?.trim() || "";
     const href = titleLink.getAttribute("href") || "";
     const detailUrl = href.startsWith("http") ? href : `https://re-birth8.com${href}`;
 
-    // 이미지
     const img = section.querySelector("div.thumb img");
     let imageUrl = img?.getAttribute("src") || "";
     if (imageUrl && !imageUrl.startsWith("http")) {
       imageUrl = `https://re-birth8.com${imageUrl}`;
     }
 
-    // 점포
     const shopEl = section.querySelector("p.shop");
     const shop = shopEl?.textContent?.trim() || "";
 
-    // 스펙 테이블: 첫 번째 테이블의 두 번째 tr에 td들
     const tables = section.querySelectorAll("div.itemInfo table");
     let year = "";
     let mileage = "";
@@ -178,7 +162,6 @@ function parseRebirthListings(html: string, model: BikeModel): BikeListing[] {
 
     if (tables.length >= 1) {
       const specTds = tables[0].querySelectorAll("tr:last-child td");
-      // 순서: 년식, 색, 주행거리, 차검, 배기량
       if (specTds.length >= 1) year = specTds[0]?.textContent?.trim() || "";
       if (specTds.length >= 3) mileage = specTds[2]?.textContent?.trim() || "";
     }
@@ -220,9 +203,6 @@ interface MercariItem {
   itemSize?: { name: string } | null;
 }
 
-const MERCARI_PROXY = "http://localhost:3001/api/mercari";
-const YAHOO_PROXY = "http://localhost:3001/api/yahoo";
-
 async function crawlMercari(model: BikeModel): Promise<BikeListing[]> {
   const body = {
     searchCondition: {
@@ -251,7 +231,6 @@ async function crawlMercari(model: BikeModel): Promise<BikeListing[]> {
   const data = await response.json();
   const items: MercariItem[] = data.items || [];
 
-  // 検索条件が似ている商品 제외: categoryId가 949(オートバイ車体)인 것만
   return items
     .filter((item) => String(item.categoryId) === String(MERCARI_CATEGORY_ID))
     .map((item) => ({
@@ -279,17 +258,14 @@ function parseYahooListings(html: string, model: BikeModel): BikeListing[] {
   const items = doc.querySelectorAll("li.Product");
 
   items.forEach((item) => {
-    // 타이틀 + 상세 링크
     const titleLink = item.querySelector("a.Product__titleLink");
     if (!titleLink) return;
     const name = titleLink.getAttribute("data-auction-title") || titleLink.textContent?.trim() || "";
     const detailUrl = titleLink.getAttribute("href") || "";
 
-    // 이미지
     const img = item.querySelector("img.Product__imageData");
     const imageUrl = img?.getAttribute("src") || "";
 
-    // 현재 가격
     const priceValues = item.querySelectorAll(".Product__price");
     let price = "";
     let totalPrice = "";
@@ -300,7 +276,6 @@ function parseYahooListings(html: string, model: BikeModel): BikeListing[] {
       if (label === "即決") totalPrice = value;
     });
 
-    // 남은 시간
     const timeEl = item.querySelector(".Product__time");
     const remaining = timeEl?.textContent?.trim() || "";
 
@@ -375,23 +350,62 @@ async function crawlGoobikePages(model: BikeModel, maxPages: number = 3): Promis
   return allListings;
 }
 
-// 모든 모델 순차 크롤링
-export async function crawlAllModels(models: BikeModel[]): Promise<CrawlResult[]> {
+// ============================================================
+// 사이트별 병렬 크롤링
+// 같은 사이트 내 모델들은 순차, 다른 사이트는 동시 실행
+// ============================================================
+
+// 한 사이트 내 모델들을 순차 크롤링
+async function crawlSiteModels(
+  models: BikeModel[],
+  onProgress?: (result: CrawlResult) => void
+): Promise<CrawlResult[]> {
   const results: CrawlResult[] = [];
 
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     if (i > 0) await delay(REQUEST_DELAY);
 
+    let result: CrawlResult;
     try {
       const listings = await crawlModel(model);
-      results.push({ model, listings, crawledAt: new Date().toISOString() });
+      result = { model, listings, crawledAt: new Date().toISOString() };
     } catch (err: any) {
-      results.push({ model, listings: [], crawledAt: new Date().toISOString(), error: err.message });
+      result = { model, listings: [], crawledAt: new Date().toISOString(), error: err.message };
     }
+    results.push(result);
+    onProgress?.(result);
   }
 
   return results;
+}
+
+// 모든 모델을 사이트별로 병렬 크롤링
+export async function crawlAllModels(
+  models: BikeModel[],
+  onProgress?: (results: CrawlResult[], latestResult: CrawlResult) => void
+): Promise<CrawlResult[]> {
+  // 사이트별로 모델 그룹핑
+  const siteGroups = new Map<SiteSource, BikeModel[]>();
+  for (const model of models) {
+    const group = siteGroups.get(model.source) || [];
+    group.push(model);
+    siteGroups.set(model.source, group);
+  }
+
+  const allResults: CrawlResult[] = [];
+
+  // 각 사이트를 병렬로 실행, 모델 완료 시마다 onProgress 호출
+  const promises = Array.from(siteGroups.values()).map((siteModels) =>
+    crawlSiteModels(siteModels, (result) => {
+      allResults.push(result);
+      onProgress?.([...allResults], result);
+    })
+  );
+
+  await Promise.all(promises);
+
+  return allResults;
 }
 
 // 키워드 검색

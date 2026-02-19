@@ -1,10 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+
+const DATA_FILE = path.join(__dirname, "crawl-data.json");
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 
 // DPoP 토큰 생성
 function generateDPoP(method, htu) {
@@ -116,6 +120,54 @@ app.get("/api/yahoo", async (req, res) => {
     res.send(html);
   } catch (err) {
     console.error("[Yahoo Proxy] Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 범용 HTML プロキシ (GooBike, リバースオート 등)
+app.get("/api/proxy", async (req, res) => {
+  const url = req.query.url;
+  const encoding = req.query.encoding || "utf-8";
+  if (!url) return res.status(400).json({ error: "url parameter required" });
+  console.log("[HTML Proxy] Fetching:", url);
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "ja,en;q=0.9",
+      },
+    });
+    const buffer = await response.arrayBuffer();
+    const decoded = new TextDecoder(encoding).decode(buffer);
+    console.log("[HTML Proxy] Response status:", response.status, "length:", decoded.length);
+    res.set("Content-Type", "text/html; charset=utf-8");
+    res.send(decoded);
+  } catch (err) {
+    console.error("[HTML Proxy] Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 크롤링 데이터 저장
+app.post("/api/crawl-data", (req, res) => {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(req.body, null, 2), "utf-8");
+    console.log("[Storage] Saved crawl data to", DATA_FILE);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("[Storage] Save error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 크롤링 데이터 불러오기
+app.get("/api/crawl-data", (req, res) => {
+  try {
+    if (!fs.existsSync(DATA_FILE)) return res.json(null);
+    const data = fs.readFileSync(DATA_FILE, "utf-8");
+    res.json(JSON.parse(data));
+  } catch (err) {
+    console.error("[Storage] Load error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });

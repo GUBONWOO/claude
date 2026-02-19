@@ -1,5 +1,6 @@
 import React from "react";
 import BIKE_MODELS, { SiteSource, SOURCE_LABELS } from "../config/bikes";
+import { CrawlResult } from "../utils/crawler";
 
 interface SearchBarProps {
   keyword: string;
@@ -8,6 +9,7 @@ interface SearchBarProps {
   onModelChange: (value: string) => void;
   selectedSource: SiteSource | "";
   onSourceChange: (value: SiteSource | "") => void;
+  results: CrawlResult[];
 }
 
 function SearchBar({
@@ -17,6 +19,7 @@ function SearchBar({
   onModelChange,
   selectedSource,
   onSourceChange,
+  results,
 }: SearchBarProps) {
   const modelNames = Array.from(
     new Set(
@@ -25,6 +28,13 @@ function SearchBar({
         .map((m) => m.name)
     )
   );
+
+  const totalCount = results.reduce((sum, r) => sum + r.listings.length, 0);
+
+  const countBySource = (source: SiteSource) =>
+    results
+      .filter((r) => r.model.source === source)
+      .reduce((sum, r) => sum + r.listings.length, 0);
 
   return (
     <div className="search-bar">
@@ -38,25 +48,34 @@ function SearchBar({
           }}
         >
           전체
+          {totalCount > 0 && (
+            <span className="filter-pill__count">{totalCount}</span>
+          )}
         </button>
-        {(Object.keys(SOURCE_LABELS) as SiteSource[]).map((key) => (
-          <button
-            type="button"
-            key={key}
-            className={`filter-pill filter-pill--${key} ${
-              selectedSource === key
-                ? `filter-pill--active filter-pill--active-${key}`
-                : ""
-            }`}
-            onClick={() => {
-              onSourceChange(key);
-              onModelChange("");
-            }}
-          >
-            <span className="filter-pill__dot" />
-            {SOURCE_LABELS[key]}
-          </button>
-        ))}
+        {(Object.keys(SOURCE_LABELS) as SiteSource[]).map((key) => {
+          const count = countBySource(key);
+          return (
+            <button
+              type="button"
+              key={key}
+              className={`filter-pill filter-pill--${key} ${
+                selectedSource === key
+                  ? `filter-pill--active filter-pill--active-${key}`
+                  : ""
+              }`}
+              onClick={() => {
+                onSourceChange(key);
+                onModelChange("");
+              }}
+            >
+              <span className="filter-pill__dot" />
+              {SOURCE_LABELS[key]}
+              {count > 0 && (
+                <span className="filter-pill__count">{count}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <div className="search-bar__inputs">

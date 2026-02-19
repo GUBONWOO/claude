@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useCrawler } from "./hooks/useCrawler";
 import { searchListings, BikeListing } from "./utils/crawler";
 import { SiteSource } from "./config/bikes";
@@ -19,23 +19,30 @@ function sortListings(listings: BikeListing[], sortKey: SortKey): BikeListing[] 
   const sorted = [...listings];
   sorted.sort((a, b) => {
     switch (sortKey) {
-      case "price_asc":
-        return parseNumber(a.price) - parseNumber(b.price);
-      case "price_desc":
-        return parseNumber(b.price) - parseNumber(a.price);
-      case "year_desc":
-        return parseNumber(b.year) - parseNumber(a.year);
-      case "year_asc":
-        return parseNumber(a.year) - parseNumber(b.year);
-      case "mileage_asc":
-        return parseNumber(a.mileage) - parseNumber(b.mileage);
-      case "mileage_desc":
-        return parseNumber(b.mileage) - parseNumber(a.mileage);
-      default:
-        return 0;
+      case "price_asc":   return parseNumber(a.price) - parseNumber(b.price);
+      case "price_desc":  return parseNumber(b.price) - parseNumber(a.price);
+      case "year_desc":   return parseNumber(b.year)  - parseNumber(a.year);
+      case "year_asc":    return parseNumber(a.year)  - parseNumber(b.year);
+      case "mileage_asc": return parseNumber(a.mileage) - parseNumber(b.mileage);
+      case "mileage_desc":return parseNumber(b.mileage) - parseNumber(a.mileage);
+      default:            return 0;
     }
   });
   return sorted;
+}
+
+function SkeletonCard() {
+  return (
+    <div className="skeleton-card">
+      <div className="skeleton-card__image skeleton" />
+      <div className="skeleton-card__body">
+        <div className="skeleton-card__line skeleton" style={{ width: "30%", height: "10px" }} />
+        <div className="skeleton-card__line skeleton" style={{ width: "75%", height: "14px" }} />
+        <div className="skeleton-card__line skeleton" style={{ width: "50%", height: "14px" }} />
+        <div className="skeleton-card__line skeleton" style={{ width: "40%", height: "12px", marginTop: 4 }} />
+      </div>
+    </div>
+  );
 }
 
 function App() {
@@ -43,8 +50,15 @@ function App() {
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedSource, setSelectedSource] = useState<SiteSource | "">("");
   const [sortKey, setSortKey] = useState<SortKey>("none");
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const { results, loading, lastCrawled, refresh } = useCrawler();
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const filteredListings = useMemo(() => {
     let filtered = selectedSource
@@ -88,21 +102,24 @@ function App() {
             onModelChange={setSelectedModel}
             selectedSource={selectedSource}
             onSourceChange={setSelectedSource}
+            results={results}
           />
 
-          {results.length > 0 ? (
+          {loading && results.length === 0 ? (
+            <div>
+              <div className="listings-grid">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            </div>
+          ) : results.length > 0 ? (
             <SearchResults
               listings={filteredListings}
               keyword={keyword}
               sortKey={sortKey}
               onSortChange={setSortKey}
             />
-          ) : loading ? (
-            <div className="loading-state">
-              <div className="loading-state__spinner" />
-              <p className="loading-state__text">첫 크롤링 중...</p>
-              <p className="loading-state__sub">모델당 5초 간격으로 수집합니다</p>
-            </div>
           ) : (
             <div className="loading-state">
               <p className="loading-state__text">데이터를 불러오는 중입니다</p>
@@ -110,6 +127,16 @@ function App() {
           )}
         </div>
       </main>
+
+      <button
+        className={`scroll-top-btn ${showScrollTop ? "visible" : ""}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="맨 위로"
+      >
+        <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+          <path d="M8 12V4M4 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
     </div>
   );
 }

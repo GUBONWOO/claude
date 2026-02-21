@@ -1,10 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
-const fs = require("fs");
-const path = require("path");
-
-const DATA_FILE = path.join(__dirname, "crawl-data.json");
+const db = require("./database/crawler-db");
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
@@ -148,31 +146,124 @@ app.get("/api/proxy", async (req, res) => {
   }
 });
 
-// 크롤링 데이터 저장
-app.post("/api/crawl-data", (req, res) => {
+// 크롤링 데이터 저장 (DB - 완전 동기화)
+app.post("/api/crawl-data", async (req, res) => {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(req.body, null, 2), "utf-8");
-    console.log("[Storage] Saved crawl data to", DATA_FILE);
-    res.json({ ok: true });
+    // DB에 저장 (기존 데이터는 삭제되고 크롤링 결과만 유지)
+    const results = [];
+    let totalDeleted = 0;
+    let totalInserted = 0;
+
+    for (const item of req.body) {
+      const result = await db.saveCrawlData(item.model, item.listings);
+      results.push(result);
+      totalDeleted += result.deletedCount;
+      totalInserted += result.insertedCount;
+    }
+
+    console.log(`[DB] 동기화 완료 - 모델: ${results.length}개, 삭제: ${totalDeleted}개, 추가: ${totalInserted}개`);
+
+    res.json({
+      ok: true,
+      stats: {
+        models: results.length,
+        deleted: totalDeleted,
+        inserted: totalInserted
+      },
+      dbResults: results
+    });
   } catch (err) {
-    console.error("[Storage] Save error:", err.message);
+    console.error("[DB] Save error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 크롤링 데이터 불러오기
-app.get("/api/crawl-data", (req, res) => {
+// 크롤링 데이터 불러오기 (DB)
+app.get("/api/crawl-data", async (req, res) => {
   try {
-    if (!fs.existsSync(DATA_FILE)) return res.json(null);
-    const data = fs.readFileSync(DATA_FILE, "utf-8");
-    res.json(JSON.parse(data));
+    // DB에서 데이터 조회
+    const bikes = await db.getAllBikes();
+
+    if (!bikes || bikes.length === 0) {
+      console.log("[DB] No data found in database");
+      return res.json([]);
+    }
+
+    console.log("[DB] Loaded crawl data from database:", bikes.length, "models");
+
+    // DB 데이터를 기존 형식으로 변환
+    const result = [];
+    for (const bike of bikes) {
+      const listings = await db.getListingsByBikeId(bike.id);
+      result.push({
+        model: {
+          id: bike.model_id,
+          name: bike.name,
+          maker: bike.maker,
+          source: bike.source,
+          url: bike.url
+        },
+        listings: listings.map(l => ({
+          name: l.name,
+          price: l.price,
+          totalPrice: l.total_price,
+          year: l.year,
+          mileage: l.mileage,
+          detailUrl: l.detail_url,
+          imageUrl: l.image_url,
+          model: l.model,
+          maker: l.maker,
+          source: l.source
+        }))
+      });
+    }
+    res.json(result);
   } catch (err) {
-    console.error("[Storage] Load error:", err.message);
+    console.error("[DB] Load error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-const PORT = 3001;
+// DB에서 특정 모델 조회
+app.get("/api/bikes/:modelId", async (req, res) => {
+  try {
+    const data = await db.getBikeWithListings(req.params.modelId);
+    if (!data) return res.status(404).json({ error: "Bike not found" });
+    res.json(data);
+  } catch (err) {
+    console.error("[DB] Get bike error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DB에서 바이크 검색
+app.get("/api/bikes/search/:keyword", async (req, res) => {
+  try {
+    const bikes = await db.searchBikes(req.params.keyword);
+    res.json(bikes);
+  } catch (err) {
+    console.error("[DB] Search error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DB 모든 바이크 목록 조회
+app.get("/api/bikes", async (req, res) => {
+  try {
+    const bikes = await db.getAllBikes();
+    res.json(bikes);
+  } catch (err) {
+    console.error("[DB] Get all bikes error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 환경변수 검증
+if (!process.env.PORT) {
+  console.warn('⚠️  PORT not set in .env, using default 3001');
+}
+
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Proxy server running on http://localhost:${PORT}`);
+  console.log(`🚀 Proxy server running on http://localhost:${PORT}`);
 });

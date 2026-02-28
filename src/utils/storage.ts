@@ -1,6 +1,7 @@
 import { CrawlResult } from "./crawler";
 
-const API_URL = "http://localhost:3001/api/crawl-data";
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3001";
+const API_URL = `${API_BASE}/api/crawl-data`;
 
 export async function saveCrawlData(results: CrawlResult[]): Promise<void> {
   try {

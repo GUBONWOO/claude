@@ -157,7 +157,7 @@ function MainApp({ user, logout }: MainAppProps) {
 }
 
 function App() {
-  const { user, loading, login, register } = useAuth();
+  const { user, loading, login, register, logout } = useAuth();
 
   if (loading) {
     return (

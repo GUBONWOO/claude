@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useCrawler } from "./hooks/useCrawler";
-import { useAuth } from "./hooks/useAuth";
+import { useAuth, AuthUser } from "./hooks/useAuth";
 import { searchListings, BikeListing } from "./utils/crawler";
 import { SiteSource } from "./config/bikes";
 import SearchBar from "./components/SearchBar";
@@ -47,14 +47,18 @@ function SkeletonCard() {
   );
 }
 
-function MainApp() {
+interface MainAppProps {
+  user: AuthUser;
+  logout: () => void;
+}
+
+function MainApp({ user, logout }: MainAppProps) {
   const [keyword, setKeyword] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedSource, setSelectedSource] = useState<SiteSource | "">("");
   const [sortKey, setSortKey] = useState<SortKey>("none");
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  const { user, logout } = useAuth();
   const isAdmin = user?.role === "admin";
   const { results, loading, lastCrawled, refresh } = useCrawler(isAdmin);
 
@@ -169,7 +173,7 @@ function App() {
     return <AuthPage onLogin={login} onRegister={register} />;
   }
 
-  return <MainApp />;
+  return <MainApp user={user} logout={logout} />;
 }
 
 export default App;

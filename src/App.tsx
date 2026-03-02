@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useCrawler } from "./hooks/useCrawler";
+import { useAuth } from "./hooks/useAuth";
 import { searchListings, BikeListing } from "./utils/crawler";
 import { SiteSource } from "./config/bikes";
 import SearchBar from "./components/SearchBar";
 import SearchResults from "./components/SearchResults";
 import StatusBar from "./components/StatusBar";
+import AuthPage from "./components/AuthPage";
 import "./App.css";
 
 export type SortKey = "none" | "price_asc" | "price_desc" | "year_desc" | "year_asc" | "mileage_asc" | "mileage_desc";
@@ -45,14 +47,16 @@ function SkeletonCard() {
   );
 }
 
-function App() {
+function MainApp() {
   const [keyword, setKeyword] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedSource, setSelectedSource] = useState<SiteSource | "">("");
   const [sortKey, setSortKey] = useState<SortKey>("none");
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  const { results, loading, lastCrawled, refresh } = useCrawler();
+  const { user, logout } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const { results, loading, lastCrawled, refresh } = useCrawler(isAdmin);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -82,6 +86,13 @@ function App() {
                 GooBike · リバースオート · メルカリ · ヤフオク
               </span>
             </div>
+            <div className="app-header__user">
+              <span className="app-header__username">
+                {user?.username}
+                {isAdmin && <span className="app-header__role-badge">관리자</span>}
+              </span>
+              <button className="btn-logout" onClick={logout}>로그아웃</button>
+            </div>
           </div>
         </div>
       </header>
@@ -92,7 +103,7 @@ function App() {
             results={results}
             loading={loading}
             lastCrawled={lastCrawled}
-            onRefresh={refresh}
+            onRefresh={isAdmin ? refresh : undefined}
           />
 
           <SearchBar
@@ -139,6 +150,26 @@ function App() {
       </button>
     </div>
   );
+}
+
+function App() {
+  const { user, loading, login, register } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <span className="status-bar__spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage onLogin={login} onRegister={register} />;
+  }
+
+  return <MainApp />;
 }
 
 export default App;

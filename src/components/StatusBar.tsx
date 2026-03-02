@@ -6,7 +6,7 @@ interface StatusBarProps {
   results: CrawlResult[];
   loading: boolean;
   lastCrawled: Date | null;
-  onRefresh: () => void;
+  onRefresh?: () => void;
 }
 
 function StatusBar({ results, loading, lastCrawled, onRefresh }: StatusBarProps) {
@@ -38,9 +38,11 @@ function StatusBar({ results, loading, lastCrawled, onRefresh }: StatusBarProps)
           )}
           {loading && <span className="status-bar__spinner" />}
         </div>
-        <button className="btn-refresh" onClick={onRefresh} disabled={loading}>
-          {loading ? "크롤링 중..." : "새로고침"}
-        </button>
+        {onRefresh && (
+          <button className="btn-refresh" onClick={onRefresh} disabled={loading}>
+            {loading ? "크롤링 중..." : "새로고침"}
+          </button>
+        )}
       </div>
 
       <div className="status-bar__sources">

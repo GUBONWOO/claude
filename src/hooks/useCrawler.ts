@@ -3,6 +3,8 @@ import { crawlAllModels, CrawlResult } from "../utils/crawler";
 import { saveCrawlData, loadCrawlData } from "../utils/storage";
 import BIKE_MODELS, { CRAWL_INTERVAL } from "../config/bikes";
 
+const TOKEN_KEY = "bike_auth_token";
+
 // 모델별로 새 크롤링 결과를 기존 데이터에 병합
 function mergeAllResults(existing: CrawlResult[], newResults: CrawlResult[]): CrawlResult[] {
   const merged = [...existing];
@@ -17,7 +19,7 @@ function mergeAllResults(existing: CrawlResult[], newResults: CrawlResult[]): Cr
   return merged;
 }
 
-export function useCrawler() {
+export function useCrawler(isAdmin: boolean = false) {
   const [results, setResults] = useState<CrawlResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastCrawled, setLastCrawled] = useState<Date | null>(null);
@@ -39,31 +41,37 @@ export function useCrawler() {
   }, []);
 
   const doCrawl = useCallback(async () => {
+    if (!isAdmin) return;
     setLoading(true);
     try {
       // 크롤링 중에는 화면 갱신하지 않음 — 기존 데이터 유지
       const crawled = await crawlAllModels(BIKE_MODELS);
-      // 전체 완료 후 기존 데이터와 병합 → 화면 갱신 + 파일 저장
+      // 전체 완료 후 기존 데이터와 병합 → 화면 갱신 + DB 저장
       const merged = mergeAllResults(resultsRef.current, crawled);
       setResults(merged);
       resultsRef.current = merged;
       setLastCrawled(new Date());
-      saveCrawlData(merged);
+      const token = localStorage.getItem(TOKEN_KEY) ?? undefined;
+      saveCrawlData(merged, token);
     } catch {
       // 개별 모델 에러는 CrawlResult.error에 포함됨
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     loadSaved();
-    doCrawl();
-    intervalRef.current = setInterval(doCrawl, CRAWL_INTERVAL);
+
+    if (isAdmin) {
+      doCrawl();
+      intervalRef.current = setInterval(doCrawl, CRAWL_INTERVAL);
+    }
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [doCrawl, loadSaved]);
+  }, [isAdmin, doCrawl, loadSaved]);
 
   return { results, loading, lastCrawled, refresh: doCrawl };
 }

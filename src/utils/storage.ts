@@ -3,11 +3,14 @@ import { CrawlResult } from "./crawler";
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3001";
 const API_URL = `${API_BASE}/api/crawl-data`;
 
-export async function saveCrawlData(results: CrawlResult[]): Promise<void> {
+export async function saveCrawlData(results: CrawlResult[], token?: string): Promise<void> {
   try {
     await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(results),
     });
   } catch {

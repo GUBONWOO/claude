@@ -2,8 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 const path = require("path");
+const jwt = require("jsonwebtoken");
 const db = require("./database/crawler-db");
+const authDb = require("./database/auth-db");
 require('dotenv').config();
+
+const JWT_SECRET = process.env.JWT_SECRET || "changeme-in-production";
 
 const app = express();
 app.use(cors());
@@ -13,6 +17,86 @@ app.use(express.json({ limit: "50mb" }));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "build")));
 }
+
+// JWT 인증 미들웨어
+function requireAuth(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "로그인이 필요합니다" });
+  }
+  try {
+    const payload = jwt.verify(auth.slice(7), JWT_SECRET);
+    req.user = payload;
+    next();
+  } catch {
+    return res.status(401).json({ error: "유효하지 않은 토큰입니다" });
+  }
+}
+
+// 어드민 전용 미들웨어
+function requireAdmin(req, res, next) {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ error: "관리자 권한이 필요합니다" });
+  }
+  next();
+}
+
+// 회원가입
+app.post("/api/auth/register", async (req, res) => {
+  const { username, password, email } = req.body;
+  if (!username || !password || !email) {
+    return res.status(400).json({ error: "아이디, 비밀번호, 이메일을 모두 입력해주세요" });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: "비밀번호는 6자 이상이어야 합니다" });
+  }
+  try {
+    const duplicate = await authDb.checkDuplicate(username, email);
+    if (duplicate === "username") return res.status(409).json({ error: "이미 사용중인 아이디입니다" });
+    if (duplicate === "email") return res.status(409).json({ error: "이미 사용중인 이메일입니다" });
+
+    const user = await authDb.createUser(username, password, email);
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    res.status(201).json({ token, user: { id: user.id, username: user.username, role: user.role } });
+  } catch (err) {
+    console.error("[Auth] Register error:", err.message);
+    res.status(500).json({ error: "서버 오류가 발생했습니다" });
+  }
+});
+
+// 로그인
+app.post("/api/auth/login", async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "아이디와 비밀번호를 입력해주세요" });
+  }
+  try {
+    const user = await authDb.findUserByUsername(username);
+    if (!user) return res.status(401).json({ error: "아이디 또는 비밀번호가 올바르지 않습니다" });
+
+    const valid = await authDb.verifyPassword(password, user.password);
+    if (!valid) return res.status(401).json({ error: "아이디 또는 비밀번호가 올바르지 않습니다" });
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
+  } catch (err) {
+    console.error("[Auth] Login error:", err.message);
+    res.status(500).json({ error: "서버 오류가 발생했습니다" });
+  }
+});
+
+// 토큰 검증 (현재 로그인 유저 확인)
+app.get("/api/auth/me", requireAuth, (req, res) => {
+  res.json({ user: req.user });
+});
 
 // DPoP 토큰 생성
 function generateDPoP(method, htu) {
@@ -152,8 +236,8 @@ app.get("/api/proxy", async (req, res) => {
   }
 });
 
-// 크롤링 데이터 저장 (DB - 완전 동기화)
-app.post("/api/crawl-data", async (req, res) => {
+// 크롤링 데이터 저장 (DB - 완전 동기화, 어드민 전용)
+app.post("/api/crawl-data", requireAuth, requireAdmin, async (req, res) => {
   try {
     // DB에 저장 (기존 데이터는 삭제되고 크롤링 결과만 유지)
     const results = [];

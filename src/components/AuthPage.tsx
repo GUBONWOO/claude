@@ -64,7 +64,7 @@ function AuthPage({ onLogin, onRegister, onGoogleLogin }: AuthPageProps) {
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => setError("Google 로그인에 실패했습니다")}
-            width="100%"
+            width="360"
             text="signin_with"
             shape="rectangular"
           />

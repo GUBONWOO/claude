@@ -1,14 +1,16 @@
 import { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
 import { AuthUser } from "../hooks/useAuth";
 
 interface AuthPageProps {
   onLogin: (username: string, password: string) => Promise<AuthUser>;
   onRegister: (username: string, password: string, email: string) => Promise<AuthUser>;
+  onGoogleLogin: (credential: string) => Promise<AuthUser>;
 }
 
 type Tab = "login" | "register";
 
-function AuthPage({ onLogin, onRegister }: AuthPageProps) {
+function AuthPage({ onLogin, onRegister, onGoogleLogin }: AuthPageProps) {
   const [tab, setTab] = useState<Tab>("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +35,16 @@ function AuthPage({ onLogin, onRegister }: AuthPageProps) {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    if (!credentialResponse.credential) return;
+    setError("");
+    try {
+      await onGoogleLogin(credentialResponse.credential);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Google 로그인 실패");
+    }
+  };
+
   const switchTab = (t: Tab) => {
     setTab(t);
     setError("");
@@ -46,6 +58,20 @@ function AuthPage({ onLogin, onRegister }: AuthPageProps) {
       <div className="auth-card">
         <div className="auth-logo">
           <span className="app-header__logo">Bike Search</span>
+        </div>
+
+        <div className="auth-google">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Google 로그인에 실패했습니다")}
+            width="100%"
+            text="signin_with"
+            shape="rectangular"
+          />
+        </div>
+
+        <div className="auth-divider">
+          <span>또는</span>
         </div>
 
         <div className="auth-tabs">

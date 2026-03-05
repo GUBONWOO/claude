@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { useCrawler } from "./hooks/useCrawler";
 import { useAuth, AuthUser } from "./hooks/useAuth";
 import { searchListings, BikeListing } from "./utils/crawler";
@@ -8,6 +9,8 @@ import SearchResults from "./components/SearchResults";
 import StatusBar from "./components/StatusBar";
 import AuthPage from "./components/AuthPage";
 import "./App.css";
+
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
 
 export type SortKey = "none" | "price_asc" | "price_desc" | "year_desc" | "year_asc" | "mileage_asc" | "mileage_desc";
 
@@ -156,8 +159,8 @@ function MainApp({ user, logout }: MainAppProps) {
   );
 }
 
-function App() {
-  const { user, loading, login, register, logout } = useAuth();
+function AppInner() {
+  const { user, loading, login, register, googleLogin, logout } = useAuth();
 
   if (loading) {
     return (
@@ -170,10 +173,18 @@ function App() {
   }
 
   if (!user) {
-    return <AuthPage onLogin={login} onRegister={register} />;
+    return <AuthPage onLogin={login} onRegister={register} onGoogleLogin={googleLogin} />;
   }
 
   return <MainApp user={user} logout={logout} />;
+}
+
+function App() {
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AppInner />
+    </GoogleOAuthProvider>
+  );
 }
 
 export default App;

@@ -50,4 +50,20 @@ async function checkDuplicate(username, email) {
   return null;
 }
 
-module.exports = { createUser, findUserByUsername, verifyPassword, checkDuplicate };
+/**
+ * Google OAuth - email 기준으로 upsert
+ * 첫 로그인이면 INSERT(role='user'), 이미 있으면 username만 최신으로 UPDATE
+ */
+async function upsertGoogleUser(username, email) {
+  const result = await pool.query(
+    `INSERT INTO users (username, email, role)
+     VALUES ($1, $2, 'user')
+     ON CONFLICT (email)
+     DO UPDATE SET username = EXCLUDED.username
+     RETURNING id, username, email, role`,
+    [username, email]
+  );
+  return result.rows[0];
+}
+
+module.exports = { createUser, findUserByUsername, verifyPassword, checkDuplicate, upsertGoogleUser };

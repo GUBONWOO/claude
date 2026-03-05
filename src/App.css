@@ -1163,6 +1163,29 @@ mark {
   margin-bottom: 28px;
 }
 
+.auth-google {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
 .auth-tabs {
   display: flex;
   border-bottom: 1px solid var(--border-subtle);

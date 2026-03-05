@@ -61,6 +61,19 @@ export function useAuth() {
     return data.user as AuthUser;
   }, []);
 
+  const googleLogin = useCallback(async (credential: string) => {
+    const res = await fetch(`${getApiBase()}/api/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Google 로그인 실패");
+    localStorage.setItem(TOKEN_KEY, data.token);
+    setUser(data.user);
+    return data.user as AuthUser;
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
@@ -68,5 +81,5 @@ export function useAuth() {
 
   const getToken = useCallback(() => localStorage.getItem(TOKEN_KEY), []);
 
-  return { user, loading, login, register, logout, getToken };
+  return { user, loading, login, register, googleLogin, logout, getToken };
 }

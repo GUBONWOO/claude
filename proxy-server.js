@@ -3,11 +3,14 @@ const cors = require("cors");
 const crypto = require("crypto");
 const path = require("path");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 const db = require("./database/crawler-db");
 const authDb = require("./database/auth-db");
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme-in-production";
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const app = express();
 app.use(cors());
@@ -96,6 +99,32 @@ app.post("/api/auth/login", async (req, res) => {
 // 토큰 검증 (현재 로그인 유저 확인)
 app.get("/api/auth/me", requireAuth, (req, res) => {
   res.json({ user: req.user });
+});
+
+// Google OAuth 로그인
+app.post("/api/auth/google", async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) return res.status(400).json({ error: "credential이 없습니다" });
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const username = payload.name || payload.email.split("@")[0];
+    const email = payload.email;
+
+    const user = await authDb.upsertGoogleUser(username, email);
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
+  } catch (err) {
+    console.error("[Auth] Google login error:", err.message);
+    res.status(401).json({ error: "Google 인증에 실패했습니다" });
+  }
 });
 
 // DPoP 토큰 생성

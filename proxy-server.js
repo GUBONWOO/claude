@@ -16,6 +16,13 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
+// Google OAuth 팝업 허용을 위한 COOP 헤더 설정
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  next();
+});
+
 // 프로덕션(Docker/Railway)에서 React 빌드 파일 서빙
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "build")));

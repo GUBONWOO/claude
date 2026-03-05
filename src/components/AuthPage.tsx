@@ -67,6 +67,7 @@ function AuthPage({ onLogin, onRegister, onGoogleLogin }: AuthPageProps) {
             width="360"
             text="signin_with"
             shape="rectangular"
+            prompt="select_account"
           />
         </div>
 

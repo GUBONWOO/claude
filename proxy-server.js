@@ -187,7 +187,8 @@ app.get("/auth/kakao/callback", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // 4) 토큰을 프론트엔드로 전달 (script로 postMessage 또는 redirect with token)
+    // 4) 토큰을 프론트엔드로 전달 - COOP을 unsafe-none으로 설정해야 postMessage가 허용됨
+    res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
     res.send(`<!DOCTYPE html>
 <html><body><script>
   window.opener && window.opener.postMessage({ type: 'KAKAO_LOGIN', token: '${token}' }, '*');

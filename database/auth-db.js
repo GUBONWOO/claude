@@ -66,4 +66,21 @@ async function upsertGoogleUser(username, email) {
   return result.rows[0];
 }
 
-module.exports = { createUser, findUserByUsername, verifyPassword, checkDuplicate, upsertGoogleUser };
+/**
+ * Kakao OAuth - email(카카오 고유 ID) 기준으로 upsert
+ * 첫 로그인이면 INSERT(role='user'), 이미 있으면 username만 최신으로 UPDATE
+ */
+async function upsertKakaoUser(username, kakaoId) {
+  const email = `kakao_${kakaoId}`;
+  const result = await pool.query(
+    `INSERT INTO users (username, email, role)
+     VALUES ($1, $2, 'user')
+     ON CONFLICT (email)
+     DO UPDATE SET username = EXCLUDED.username
+     RETURNING id, username, email, role`,
+    [username, email]
+  );
+  return result.rows[0];
+}
+
+module.exports = { createUser, findUserByUsername, verifyPassword, checkDuplicate, upsertGoogleUser, upsertKakaoUser };

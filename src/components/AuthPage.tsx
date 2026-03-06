@@ -6,11 +6,12 @@ interface AuthPageProps {
   onLogin: (username: string, password: string) => Promise<AuthUser>;
   onRegister: (username: string, password: string, email: string) => Promise<AuthUser>;
   onGoogleLogin: (credential: string) => Promise<AuthUser>;
+  onKakaoLogin: () => Promise<AuthUser>;
 }
 
 type Tab = "login" | "register";
 
-function AuthPage({ onLogin, onRegister, onGoogleLogin }: AuthPageProps) {
+function AuthPage({ onLogin, onRegister, onGoogleLogin, onKakaoLogin }: AuthPageProps) {
   const [tab, setTab] = useState<Tab>("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -45,6 +46,15 @@ function AuthPage({ onLogin, onRegister, onGoogleLogin }: AuthPageProps) {
     }
   };
 
+  const handleKakaoLogin = async () => {
+    setError("");
+    try {
+      await onKakaoLogin();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "카카오 로그인 실패");
+    }
+  };
+
   const switchTab = (t: Tab) => {
     setTab(t);
     setError("");
@@ -67,8 +77,19 @@ function AuthPage({ onLogin, onRegister, onGoogleLogin }: AuthPageProps) {
             width="360"
             text="signin_with"
             shape="rectangular"
-            prompt="select_account"
           />
+        </div>
+
+        <div className="auth-kakao">
+          <button className="kakao-login-btn" type="button" onClick={handleKakaoLogin}>
+            <img
+              src="https://k.kakaocdn.net/14/dn/btroDszwNrM/I6efHub1SN5KCJqLm1Ovx1/o.jpg"
+              alt="카카오 로그인"
+              width="22"
+              height="22"
+            />
+            카카오 로그인
+          </button>
         </div>
 
         <div className="auth-divider">

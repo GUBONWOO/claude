@@ -10,6 +10,8 @@ require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme-in-production";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID || "";
+const KAKAO_REDIRECT_URI = process.env.KAKAO_REDIRECT_URI || "http://localhost:8080/auth/kakao/callback";
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const app = express();
@@ -131,6 +133,69 @@ app.post("/api/auth/google", async (req, res) => {
   } catch (err) {
     console.error("[Auth] Google login error:", err.message);
     res.status(401).json({ error: "Google 인증에 실패했습니다" });
+  }
+});
+
+// Kakao OAuth - 로그인 페이지로 리다이렉트
+app.get("/auth/kakao", (req, res) => {
+  const kakaoAuthUrl =
+    `https://kauth.kakao.com/oauth/authorize` +
+    `?client_id=${KAKAO_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(KAKAO_REDIRECT_URI)}` +
+    `&response_type=code`;
+  res.redirect(kakaoAuthUrl);
+});
+
+// Kakao OAuth - 콜백 처리
+app.get("/auth/kakao/callback", async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.status(400).send("카카오 인증 코드가 없습니다");
+  try {
+    // 1) code로 access_token 교환
+    const tokenRes = await fetch("https://kauth.kakao.com/oauth/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: KAKAO_CLIENT_ID,
+        redirect_uri: KAKAO_REDIRECT_URI,
+        code,
+      }),
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.access_token) {
+      console.error("[Auth] Kakao token error:", tokenData);
+      return res.status(401).send("카카오 토큰 발급 실패");
+    }
+
+    // 2) access_token으로 사용자 정보 조회
+    const userRes = await fetch("https://kapi.kakao.com/v2/user/me", {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    const kakaoUser = await userRes.json();
+    const kakaoId = String(kakaoUser.id);
+    const nickname =
+      kakaoUser.kakao_account?.profile?.nickname ||
+      kakaoUser.properties?.nickname ||
+      `kakao_${kakaoId}`;
+
+    // 3) DB upsert 후 JWT 발급
+    const user = await authDb.upsertKakaoUser(nickname, kakaoId);
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // 4) 토큰을 프론트엔드로 전달 (script로 postMessage 또는 redirect with token)
+    res.send(`<!DOCTYPE html>
+<html><body><script>
+  window.opener && window.opener.postMessage({ type: 'KAKAO_LOGIN', token: '${token}' }, '*');
+  window.close();
+</script></body></html>`);
+  } catch (err) {
+    console.error("[Auth] Kakao callback error:", err.message);
+    res.status(500).send("카카오 로그인 처리 중 오류가 발생했습니다");
   }
 });
 

@@ -160,7 +160,7 @@ function MainApp({ user, logout }: MainAppProps) {
 }
 
 function AppInner() {
-  const { user, loading, login, register, googleLogin, logout } = useAuth();
+  const { user, loading, login, register, googleLogin, kakaoLogin, logout } = useAuth();
 
   if (loading) {
     return (
@@ -173,7 +173,7 @@ function AppInner() {
   }
 
   if (!user) {
-    return <AuthPage onLogin={login} onRegister={register} onGoogleLogin={googleLogin} />;
+    return <AuthPage onLogin={login} onRegister={register} onGoogleLogin={googleLogin} onKakaoLogin={kakaoLogin} />;
   }
 
   return <MainApp user={user} logout={logout} />;

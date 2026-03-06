@@ -74,6 +74,40 @@ export function useAuth() {
     return data.user as AuthUser;
   }, []);
 
+  const kakaoLogin = useCallback((): Promise<AuthUser> => {
+    return new Promise((resolve, reject) => {
+      const popup = window.open(
+        `${getApiBase()}/auth/kakao`,
+        "kakaoLogin",
+        "width=500,height=700,left=200,top=100"
+      );
+      const handler = (e: MessageEvent) => {
+        if (e.data?.type !== "KAKAO_LOGIN") return;
+        window.removeEventListener("message", handler);
+        const { token } = e.data;
+        if (!token) { reject(new Error("카카오 로그인 실패")); return; }
+        fetch(`${getApiBase()}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((r) => (r.ok ? r.json() : Promise.reject()))
+          .then((data) => {
+            localStorage.setItem(TOKEN_KEY, token);
+            setUser(data.user);
+            resolve(data.user as AuthUser);
+          })
+          .catch(() => reject(new Error("카카오 로그인 실패")));
+      };
+      window.addEventListener("message", handler);
+      const timer = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(timer);
+          window.removeEventListener("message", handler);
+          reject(new Error("카카오 로그인이 취소되었습니다"));
+        }
+      }, 500);
+    });
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
@@ -81,5 +115,5 @@ export function useAuth() {
 
   const getToken = useCallback(() => localStorage.getItem(TOKEN_KEY), []);
 
-  return { user, loading, login, register, googleLogin, logout, getToken };
+  return { user, loading, login, register, googleLogin, kakaoLogin, logout, getToken };
 }

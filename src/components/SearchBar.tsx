@@ -58,7 +58,7 @@ function SearchBar({
           <button
             type="button"
             key={maker}
-            className={`filter-pill filter-pill--maker ${selectedMaker === maker ? "filter-pill--active" : ""}`}
+            className={`filter-pill filter-pill--maker filter-pill--maker-${maker.toLowerCase()} ${selectedMaker === maker ? "filter-pill--maker-active" : ""}`}
             onClick={() => onMakerChange(maker)}
           >
             {maker}

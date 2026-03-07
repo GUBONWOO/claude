@@ -1,6 +1,5 @@
 import React from "react";
 import { CrawlResult } from "../utils/crawler";
-import { SOURCE_LABELS } from "../config/bikes";
 
 interface StatusBarProps {
   results: CrawlResult[];
@@ -10,12 +9,15 @@ interface StatusBarProps {
 }
 
 function StatusBar({ results, loading, lastCrawled, onRefresh }: StatusBarProps) {
-  const errors = results.filter((r) => r.error);
+  const totalListings = results.reduce((sum, r) => sum + r.listings.length, 0);
 
   return (
     <section className="status-bar">
       <div className="status-bar__summary">
         <div className="status-bar__stats">
+          <span className="status-bar__total">
+            총 <strong>{totalListings}</strong>대
+          </span>
           {lastCrawled && (
             <span className="status-bar__crawl-time">
               {lastCrawled.toLocaleString("ko-KR")}
@@ -29,31 +31,6 @@ function StatusBar({ results, loading, lastCrawled, onRefresh }: StatusBarProps)
           </button>
         )}
       </div>
-
-      <div className="status-bar__sources">
-        {(["goobike", "rebirth", "mercari", "yahoo"] as const).map((source) => {
-          const sourceResults = results.filter((r) => r.model.source === source);
-          if (sourceResults.length === 0) return null;
-          const count = sourceResults.reduce((sum, r) => sum + r.listings.length, 0);
-          const errorCount = sourceResults.filter((r) => r.error).length;
-          return (
-            <div key={source} className={`source-row source-row--${source}`}>
-              <span className="source-row__dot" />
-              <span className="source-row__label">{SOURCE_LABELS[source]}</span>
-              <span className="source-row__count">{count}대</span>
-              {errorCount > 0 && (
-                <span className="source-row__error">{errorCount}개 오류</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {errors.length > 0 && (
-        <p className="status-bar__errors">
-          {errors.map((e) => `${e.model.name}: ${e.error}`).join(" · ")}
-        </p>
-      )}
     </section>
   );
 }

@@ -273,66 +273,77 @@ body {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .search-bar__filters--sub {
-  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .filter-pill--sm {
-  padding: 4px 10px;
+  padding: 4px 12px;
   font-size: 0.75rem;
+  border-width: 1px;
 }
-
-/* Honda: 빨강 */
-.filter-pill--maker-honda { border-color: #e53935; color: #e53935; }
-.filter-pill--maker-honda.filter-pill--maker-active { background: #e53935; color: #fff; border-color: #e53935; }
-
-/* Kawasaki: 진한 네이비 */
-.filter-pill--maker-kawasaki { border-color: #1a237e; color: #1a237e; }
-.filter-pill--maker-kawasaki.filter-pill--maker-active { background: #1a237e; color: #fff; border-color: #1a237e; }
-
-/* Suzuki: 파랑 */
-.filter-pill--maker-suzuki { border-color: #1565c0; color: #1565c0; }
-.filter-pill--maker-suzuki.filter-pill--maker-active { background: #1565c0; color: #fff; border-color: #1565c0; }
-
-/* Yamaha: 초록 */
-.filter-pill--maker-yamaha { border-color: #2e7d32; color: #2e7d32; }
-.filter-pill--maker-yamaha.filter-pill--maker-active { background: #2e7d32; color: #fff; border-color: #2e7d32; }
 
 .filter-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 6px 16px;
   border-radius: var(--radius-pill);
   font-size: 0.8125rem;
   font-weight: 500;
-  border: 1px solid var(--border-subtle);
+  border: 1.5px solid var(--border-subtle);
   background: var(--bg-card);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
   white-space: nowrap;
   user-select: none;
   -webkit-user-select: none;
+  letter-spacing: 0.01em;
 }
 
 .filter-pill:hover {
   border-color: var(--border-input);
   color: var(--text-primary);
+  background: var(--bg-card-hover);
 }
 
+/* 전체 버튼 활성화 — 부드러운 다크 */
 .filter-pill--active {
-  background: var(--text-primary);
+  background: #3d3d3d;
   color: #fff;
-  border-color: var(--text-primary);
+  border-color: #3d3d3d;
 }
 
+/* 사이트 서브필터 활성화 */
 .filter-pill--active-goobike { background: var(--source-goobike-bg); color: var(--source-goobike-text); border-color: var(--source-goobike-dot); }
 .filter-pill--active-rebirth  { background: var(--source-rebirth-bg);  color: var(--source-rebirth-text);  border-color: var(--source-rebirth-dot); }
 .filter-pill--active-mercari  { background: var(--source-mercari-bg);  color: var(--source-mercari-text);  border-color: var(--source-mercari-dot); }
 .filter-pill--active-yahoo    { background: var(--source-yahoo-bg);    color: var(--source-yahoo-text);    border-color: var(--source-yahoo-dot); }
+
+/* Honda: 연한 빨강 */
+.filter-pill--maker-honda { border-color: #ffcdd2; color: #c62828; }
+.filter-pill--maker-honda:hover { border-color: #ef9a9a; background: #fff8f8; }
+.filter-pill--maker-honda.filter-pill--maker-active { background: #ffebee; color: #c62828; border-color: #ef9a9a; font-weight: 600; }
+
+/* Kawasaki: 연한 네이비 */
+.filter-pill--maker-kawasaki { border-color: #c5cae9; color: #283593; }
+.filter-pill--maker-kawasaki:hover { border-color: #9fa8da; background: #f8f9ff; }
+.filter-pill--maker-kawasaki.filter-pill--maker-active { background: #e8eaf6; color: #283593; border-color: #9fa8da; font-weight: 600; }
+
+/* Suzuki: 연한 파랑 */
+.filter-pill--maker-suzuki { border-color: #bbdefb; color: #1565c0; }
+.filter-pill--maker-suzuki:hover { border-color: #90caf9; background: #f5faff; }
+.filter-pill--maker-suzuki.filter-pill--maker-active { background: #e3f2fd; color: #1565c0; border-color: #90caf9; font-weight: 600; }
+
+/* Yamaha: 연한 초록 */
+.filter-pill--maker-yamaha { border-color: #c8e6c9; color: #2e7d32; }
+.filter-pill--maker-yamaha:hover { border-color: #a5d6a7; background: #f5fff5; }
+.filter-pill--maker-yamaha.filter-pill--maker-active { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; font-weight: 600; }
 
 .filter-pill__dot {
   width: 6px;
@@ -363,15 +374,16 @@ body {
 .search-select {
   appearance: none;
   -webkit-appearance: none;
-  background: var(--bg-input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b6b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
-  border: 1px solid var(--border-input);
+  background: var(--bg-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b6b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1.5px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 10px 36px 10px 14px;
   font-size: 0.875rem;
   color: var(--text-primary);
   min-width: 150px;
   cursor: pointer;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .search-select:hover { border-color: var(--border-focus); }
@@ -400,13 +412,14 @@ body {
 
 .search-input {
   width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border-input);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 10px 40px 10px 40px;
   font-size: 0.875rem;
   color: var(--text-primary);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .search-input::placeholder { color: var(--text-tertiary); }
@@ -1122,16 +1135,26 @@ mark {
    Search bar glass effect
    ============================================================ */
 .search-bar {
-  background: rgba(255,255,255,0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 18px 20px;
   position: sticky;
   top: 57px;
   z-index: 90;
   margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  gap: 0;
+}
+
+.search-bar > .search-bar__filters:first-child {
+  margin-bottom: 10px;
+}
+
+.search-bar__inputs {
+  margin-top: 14px;
 }
 
 /* ============================================================

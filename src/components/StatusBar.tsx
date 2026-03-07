@@ -49,23 +49,16 @@ function StatusBar({ results, loading, lastCrawled, onRefresh }: StatusBarProps)
         {(["goobike", "rebirth", "mercari", "yahoo"] as const).map((source) => {
           const sourceResults = results.filter((r) => r.model.source === source);
           if (sourceResults.length === 0) return null;
+          const count = sourceResults.reduce((sum, r) => sum + r.listings.length, 0);
+          const errorCount = sourceResults.filter((r) => r.error).length;
           return (
             <div key={source} className={`source-row source-row--${source}`}>
               <span className="source-row__dot" />
               <span className="source-row__label">{SOURCE_LABELS[source]}</span>
-              <div className="source-row__chips">
-                {sourceResults.map((r) => (
-                  <span
-                    key={r.model.id}
-                    className={`source-chip ${r.error ? "source-chip--error" : ""}`}
-                  >
-                    {r.model.name}
-                    <span className="source-chip__count">
-                      {r.error ? "에러" : r.listings.length}
-                    </span>
-                  </span>
-                ))}
-              </div>
+              <span className="source-row__count">{count}대</span>
+              {errorCount > 0 && (
+                <span className="source-row__error">{errorCount}개 오류</span>
+              )}
             </div>
           );
         })}

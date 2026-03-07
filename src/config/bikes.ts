@@ -87,7 +87,7 @@ const BIKE_MODELS: BikeModel[] = [
   { id: 'goobike-xsr900', name: 'XSR900', maker: 'Yamaha', source: 'goobike', url: 'https://www.goobike.com/maker-yamaha/car-xsr900/index.html' },
   // Honda
   { id: 'goobike-cbr600rr',    name: 'CBR600RR',    maker: 'Honda', source: 'goobike', url: 'https://www.goobike.com/maker-honda/car-cbr600rr/index.html' },
-  { id: 'goobike-cbr1000rr-r', name: 'CBR1000RR-R', maker: 'Honda', source: 'goobike', url: 'https://www.goobike.com/maker-honda/car-cbr1000rr_r_fireblade/index.html' },
+  { id: 'goobike-cbr1000rr-r', name: 'CBR1000RR-R', maker: 'Honda', source: 'goobike', url: 'https://www.goobike.com/maker-honda/car-cbr1000rr_r/index.html' },
   { id: 'goobike-cb650r',      name: 'CB650R',      maker: 'Honda', source: 'goobike', url: 'https://www.goobike.com/maker-honda/car-cb650r/index.html' },
   { id: 'goobike-cb400sf',     name: 'CB400SF',     maker: 'Honda', source: 'goobike', url: 'https://www.goobike.com/maker-honda/car-cb400_super_four/index.html' },
   // Suzuki

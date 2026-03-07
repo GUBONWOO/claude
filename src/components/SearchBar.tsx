@@ -2,9 +2,13 @@ import React from "react";
 import BIKE_MODELS, { SiteSource, SOURCE_LABELS } from "../config/bikes";
 import { CrawlResult } from "../utils/crawler";
 
+const MAKERS = ["Honda", "Kawasaki", "Suzuki", "Yamaha"];
+
 interface SearchBarProps {
   keyword: string;
   onKeywordChange: (value: string) => void;
+  selectedMaker: string;
+  onMakerChange: (value: string) => void;
   selectedModel: string;
   onModelChange: (value: string) => void;
   selectedSource: SiteSource | "";
@@ -15,6 +19,8 @@ interface SearchBarProps {
 function SearchBar({
   keyword,
   onKeywordChange,
+  selectedMaker,
+  onMakerChange,
   selectedModel,
   onModelChange,
   selectedSource,
@@ -24,7 +30,7 @@ function SearchBar({
   const modelNames = Array.from(
     new Set(
       BIKE_MODELS
-        .filter((m) => !selectedSource || m.source === selectedSource)
+        .filter((m) => !selectedMaker || m.maker === selectedMaker)
         .map((m) => m.name)
     )
   );
@@ -38,19 +44,36 @@ function SearchBar({
 
   return (
     <div className="search-bar">
+      {/* 메이커 필터 */}
       <div className="search-bar__filters">
         <button
           type="button"
-          className={`filter-pill ${selectedSource === "" ? "filter-pill--active" : ""}`}
-          onClick={() => {
-            onSourceChange("");
-            onModelChange("");
-          }}
+          className={`filter-pill ${selectedMaker === "" ? "filter-pill--active" : ""}`}
+          onClick={() => { onMakerChange(""); onSourceChange(""); }}
         >
           전체
-          {totalCount > 0 && (
-            <span className="filter-pill__count">{totalCount}</span>
-          )}
+          {totalCount > 0 && <span className="filter-pill__count">{totalCount}</span>}
+        </button>
+        {MAKERS.map((maker) => (
+          <button
+            type="button"
+            key={maker}
+            className={`filter-pill filter-pill--maker ${selectedMaker === maker ? "filter-pill--active" : ""}`}
+            onClick={() => onMakerChange(maker)}
+          >
+            {maker}
+          </button>
+        ))}
+      </div>
+
+      {/* 사이트 서브필터 */}
+      <div className="search-bar__filters search-bar__filters--sub">
+        <button
+          type="button"
+          className={`filter-pill filter-pill--sm ${selectedSource === "" ? "filter-pill--active" : ""}`}
+          onClick={() => onSourceChange("")}
+        >
+          전체 사이트
         </button>
         {(Object.keys(SOURCE_LABELS) as SiteSource[]).map((key) => {
           const count = countBySource(key);
@@ -58,21 +81,14 @@ function SearchBar({
             <button
               type="button"
               key={key}
-              className={`filter-pill filter-pill--${key} ${
-                selectedSource === key
-                  ? `filter-pill--active filter-pill--active-${key}`
-                  : ""
+              className={`filter-pill filter-pill--sm filter-pill--${key} ${
+                selectedSource === key ? `filter-pill--active filter-pill--active-${key}` : ""
               }`}
-              onClick={() => {
-                onSourceChange(key);
-                onModelChange("");
-              }}
+              onClick={() => onSourceChange(key)}
             >
               <span className="filter-pill__dot" />
               {SOURCE_LABELS[key]}
-              {count > 0 && (
-                <span className="filter-pill__count">{count}</span>
-              )}
+              {count > 0 && <span className="filter-pill__count">{count}</span>}
             </button>
           );
         })}
@@ -85,7 +101,7 @@ function SearchBar({
             value={selectedModel}
             onChange={(e) => onModelChange(e.target.value)}
           >
-            <option value="">전체 모델</option>
+            <option value="">{selectedMaker ? `${selectedMaker} 전체` : "전체 모델"}</option>
             {modelNames.map((name) => (
               <option key={name} value={name}>
                 {name}

@@ -57,6 +57,7 @@ interface MainAppProps {
 
 function MainApp({ user, logout }: MainAppProps) {
   const [keyword, setKeyword] = useState("");
+  const [selectedMaker, setSelectedMaker] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedSource, setSelectedSource] = useState<SiteSource | "">("");
   const [sortKey, setSortKey] = useState<SortKey>("none");
@@ -72,15 +73,13 @@ function MainApp({ user, logout }: MainAppProps) {
   }, []);
 
   const filteredListings = useMemo(() => {
-    let filtered = selectedSource
-      ? results.filter((r) => r.model.source === selectedSource)
-      : results;
-    if (selectedModel) {
-      filtered = filtered.filter((r) => r.model.name === selectedModel);
-    }
+    let filtered = results;
+    if (selectedMaker) filtered = filtered.filter((r) => r.model.maker === selectedMaker);
+    if (selectedModel) filtered = filtered.filter((r) => r.model.name === selectedModel);
+    if (selectedSource) filtered = filtered.filter((r) => r.model.source === selectedSource);
     const searched = searchListings(filtered, keyword);
     return sortListings(searched, sortKey);
-  }, [results, keyword, selectedModel, selectedSource, sortKey]);
+  }, [results, keyword, selectedMaker, selectedModel, selectedSource, sortKey]);
 
   return (
     <div className="app-root">
@@ -116,6 +115,8 @@ function MainApp({ user, logout }: MainAppProps) {
           <SearchBar
             keyword={keyword}
             onKeywordChange={setKeyword}
+            selectedMaker={selectedMaker}
+            onMakerChange={(maker) => { setSelectedMaker(maker); setSelectedModel(""); }}
             selectedModel={selectedModel}
             onModelChange={setSelectedModel}
             selectedSource={selectedSource}

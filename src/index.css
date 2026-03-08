@@ -1,2 +1,9 @@
 @import "tailwindcss";
 @import "bootstrap/dist/css/bootstrap.min.css";
+
+/* Dark base reset */
+html, body, #root {
+  background-color: #0a0a0c;
+  margin: 0;
+  padding: 0;
+}

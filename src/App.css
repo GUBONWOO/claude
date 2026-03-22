@@ -1423,4 +1423,5 @@ mark {
   .pagination-bar { gap: 2px; }
   .pager-btn { padding: 7px 10px; font-size: 0.75rem; }
   .kakao-login-btn { width: 100%; }
+  .auth-card { padding: 32px 20px 28px; }
 }

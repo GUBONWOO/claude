@@ -74,7 +74,7 @@ function AuthPage({ onLogin, onRegister, onGoogleLogin, onKakaoLogin }: AuthPage
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => setError("Google 로그인에 실패했습니다")}
-            width="360"
+            width="300"
             text="signin_with"
             shape="rectangular"
           />

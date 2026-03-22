@@ -19,7 +19,7 @@ function AuthPage({ onLogin, onRegister, onGoogleLogin, onKakaoLogin }: AuthPage
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
@@ -70,7 +70,7 @@ function AuthPage({ onLogin, onRegister, onGoogleLogin, onKakaoLogin }: AuthPage
           <span className="app-header__logo">Bike Search</span>
         </div>
 
-        <div className="auth-google">
+        <div className="auth-google" style={{ pointerEvents: 'none', opacity: 0.4 }}>
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => setError("Google 로그인에 실패했습니다")}
